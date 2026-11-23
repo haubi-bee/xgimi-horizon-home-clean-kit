@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Values for TV screens below 720dp height (e.g. 1080p at density 2.0 = 960x540dp).
+    Matches the 1280x720dp layout in values-h720dp, scaled down by 0.75.
+-->
+<resources>
+    <dimen name="overscan_horizontal">36dp</dimen>
+    <dimen name="overscan_vertical">27dp</dimen>
+
+    <dimen name="header_end_margin">0dp</dimen>
+    <dimen name="header_button_size">30dp</dimen>
+    <dimen name="header_button_padding">7dp</dimen>
+    <dimen name="header_button_spacing">8dp</dimen>
+    <dimen name="header_button_gap">12dp</dimen>
+    <dimen name="rec_title_size">18sp</dimen>
+    <dimen name="rec_description_size">11sp</dimen>
+    <dimen name="rec_source_size">10sp</dimen>
+    <dimen name="rec_description_max_width">460dp</dimen>
+
+    <dimen name="rec_card_width">208dp</dimen>
+    <dimen name="rec_card_height">117dp</dimen>
+    <dimen name="rec_focus_pad_horizontal">12dp</dimen>
+    <dimen name="rec_focus_pad_vertical">8dp</dimen>
+    <dimen name="rec_row_height">133dp</dimen>
+
+    <dimen name="app_card_width">128dp</dimen>
+    <dimen name="app_card_height">72dp</dimen>
+    <dimen name="app_focus_pad_horizontal">8dp</dimen>
+    <dimen name="app_focus_pad_vertical">5dp</dimen>
+    <dimen name="app_row_height">82dp</dimen>
+    <dimen name="app_icon_size">24dp</dimen>
+    <dimen name="app_caption_size">9sp</dimen>
+    <dimen name="app_caption_padding">3dp</dimen>
+    <dimen name="app_label_size">9sp</dimen>
+
+    <dimen name="section_gap">10dp</dimen>
+    <dimen name="card_spacing">10dp</dimen>
+    <dimen name="card_corner_radius">6dp</dimen>
+    <dimen name="focus_frame_width">2dp</dimen>
+    <dimen name="focus_elevation">6dp</dimen>
+
+    <dimen name="clock_time_size">22sp</dimen>
+    <dimen name="weather_icon_size">14dp</dimen>
+    <dimen name="weather_text_size">11sp</dimen>
+    <dimen name="dialog_field_padding">18dp</dimen>
+    <dimen name="clock_date_size">11sp</dimen>
+
+    <dimen name="dream_clock_size">22sp</dimen>
+    <dimen name="dream_clock_margin">36dp</dimen>
+</resources>

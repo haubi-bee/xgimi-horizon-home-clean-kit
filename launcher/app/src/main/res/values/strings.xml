@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clean Home</string>
+    <string name="dream_label">Clean Home Photos</string>
+
+    <string name="hdmi_default_label">HDMI %1$d</string>
+
+    <string name="settings_button">Settings</string>
+    <string name="wifi_button">Wi-Fi settings</string>
+    <string name="wifi_button_connected">Wi-Fi settings (connected)</string>
+    <string name="wifi_button_disconnected">Wi-Fi settings (not connected)</string>
+    <string name="hdmi_button">HDMI inputs</string>
+    <string name="weather_description">Weather: %1$s</string>
+
+    <string name="menu_app_info">App info</string>
+    <string name="menu_rename">Rename</string>
+    <string name="menu_hide">Hide</string>
+    <string name="menu_unhide_all">Unhide all apps (%1$d)</string>
+    <string name="menu_weather_location">Weather location…</string>
+
+    <string name="dialog_hdmi_title">HDMI input</string>
+    <string name="dialog_rename_title">Rename</string>
+    <string name="dialog_rename_message">Leave empty to restore the original name \"%1$s\".</string>
+    <string name="dialog_weather_title">Weather location</string>
+    <string name="dialog_weather_message">City for the weather next to the clock. Leave empty to turn the weather off.</string>
+    <string name="dialog_weather_hint">e.g. London</string>
+
+    <string name="toast_launch_failed">%1$s could not be started.</string>
+    <string name="toast_app_info_failed">App info is not available on this device.</string>
+    <string name="toast_hidden">%1$s is now hidden.</string>
+    <string name="toast_unhidden">Hidden apps are visible again.</string>
+    <string name="toast_nothing_hidden">No apps are hidden.</string>
+    <string name="toast_renamed">Renamed to \"%1$s\".</string>
+    <string name="toast_name_reset">Name reset to \"%1$s\".</string>
+    <string name="toast_weather_set">Weather location: %1$s</string>
+    <string name="toast_weather_off">Weather turned off.</string>
+    <string name="toast_weather_not_found">No place found for \"%1$s\".</string>
+    <string name="toast_weather_lookup_failed">Could not look up the location. Is the TV online?</string>
+    <string name="content_unknown">Content</string>
+</resources>

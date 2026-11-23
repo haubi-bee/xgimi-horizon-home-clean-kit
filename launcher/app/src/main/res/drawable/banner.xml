@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App banner, 320x180 viewport (320x180 px at xhdpi). A simple house in front of a night sky. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="90dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#FF16202C"
+        android:pathData="M0,0h320v180h-320z" />
+    <path
+        android:fillColor="#FF1E2C3D"
+        android:pathData="M0,132h320v48h-320z" />
+    <path
+        android:fillColor="#FFF2B544"
+        android:pathData="M244,46m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M160,34L222,86L206,86L206,142L114,142L114,86L98,86Z" />
+    <path
+        android:fillColor="#FF16202C"
+        android:pathData="M148,104h24v38h-24z" />
+    <path
+        android:fillColor="#FFF2B544"
+        android:pathData="M126,96h14v14h-14zM180,96h14v14h-14z" />
+</vector>

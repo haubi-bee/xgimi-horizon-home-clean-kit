@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clean Home</string>
+    <string name="dream_label">Clean Home Fotos</string>
+
+    <string name="hdmi_default_label">HDMI %1$d</string>
+
+    <string name="settings_button">Einstellungen</string>
+    <string name="wifi_button">WLAN-Einstellungen</string>
+    <string name="wifi_button_connected">WLAN-Einstellungen (verbunden)</string>
+    <string name="wifi_button_disconnected">WLAN-Einstellungen (nicht verbunden)</string>
+    <string name="hdmi_button">HDMI-Eingänge</string>
+    <string name="weather_description">Wetter: %1$s</string>
+
+    <string name="menu_app_info">App-Info</string>
+    <string name="menu_rename">Umbenennen</string>
+    <string name="menu_hide">Ausblenden</string>
+    <string name="menu_unhide_all">Ausgeblendete Apps wieder einblenden (%1$d)</string>
+    <string name="menu_weather_location">Wetter-Ort …</string>
+
+    <string name="dialog_hdmi_title">HDMI-Eingang</string>
+    <string name="dialog_rename_title">Umbenennen</string>
+    <string name="dialog_rename_message">Leer lassen, um den ursprünglichen Namen „%1$s“ wiederherzustellen.</string>
+    <string name="dialog_weather_title">Wetter-Ort</string>
+    <string name="dialog_weather_message">Stadt für das Wetter neben der Uhr. Leer lassen schaltet das Wetter aus.</string>
+    <string name="dialog_weather_hint">z. B. München</string>
+
+    <string name="toast_launch_failed">%1$s konnte nicht gestartet werden.</string>
+    <string name="toast_app_info_failed">App-Info ist auf diesem Gerät nicht verfügbar.</string>
+    <string name="toast_hidden">%1$s ist jetzt ausgeblendet.</string>
+    <string name="toast_unhidden">Ausgeblendete Apps sind wieder sichtbar.</string>
+    <string name="toast_nothing_hidden">Es sind keine Apps ausgeblendet.</string>
+    <string name="toast_renamed">Umbenannt in „%1$s“.</string>
+    <string name="toast_name_reset">Name auf „%1$s“ zurückgesetzt.</string>
+    <string name="toast_weather_set">Wetter-Ort: %1$s</string>
+    <string name="toast_weather_off">Wetter ausgeschaltet.</string>
+    <string name="toast_weather_not_found">Kein Ort für „%1$s“ gefunden.</string>
+    <string name="toast_weather_lookup_failed">Der Ort konnte nicht gesucht werden. Ist der Fernseher online?</string>
+    <string name="content_unknown">Inhalt</string>
+</resources>

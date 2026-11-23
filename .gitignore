@@ -1,0 +1,20 @@
+# Build outputs
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+
+# Local machine settings and secrets
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Device backups written by scripts/setup.ps1 (contain device details)
+backup-*/
+
+# IDE
+.idea/
+*.iml
+.vscode/

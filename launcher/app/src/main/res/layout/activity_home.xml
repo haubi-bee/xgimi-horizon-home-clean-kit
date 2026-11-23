@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/home_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/home_background_default"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- Own container, so the slideshow only reorders the layers among themselves. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="noHideDescendants">
+
+        <ImageView
+            android:id="@+id/background_a"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/background_b"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/home_scrim" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/overscan_horizontal"
+        android:paddingTop="@dimen/overscan_vertical"
+        android:paddingRight="@dimen/overscan_horizontal"
+        android:paddingBottom="@dimen/overscan_vertical">
+
+        <!-- Content sits at the bottom; the upper half of the screen belongs to the photo. -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/recommendations_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/recommendation_title"
+                style="@style/HomeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/header_end_margin"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textSize="@dimen/rec_title_size" />
+
+            <TextView
+                android:id="@+id/recommendation_description"
+                style="@style/HomeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:maxWidth="@dimen/rec_description_max_width"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/rec_description_size" />
+
+            <TextView
+                android:id="@+id/recommendation_source"
+                style="@style/HomeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textColor="@color/accent"
+                android:textSize="@dimen/rec_source_size" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recommendation_list"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/rec_row_height"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingLeft="@dimen/rec_focus_pad_horizontal"
+                android:paddingTop="@dimen/rec_focus_pad_vertical"
+                android:paddingRight="@dimen/rec_focus_pad_horizontal"
+                android:paddingBottom="@dimen/rec_focus_pad_vertical"
+                android:scrollbars="none" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/app_list"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/app_row_height"
+            android:layout_marginTop="@dimen/section_gap"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:paddingLeft="@dimen/app_focus_pad_horizontal"
+            android:paddingTop="@dimen/app_focus_pad_vertical"
+            android:paddingRight="@dimen/app_focus_pad_horizontal"
+            android:paddingBottom="@dimen/app_focus_pad_vertical"
+            android:scrollbars="none" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="@dimen/overscan_vertical"
+        android:layout_marginEnd="@dimen/overscan_horizontal"
+        android:clipChildren="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Header shortcuts, left to right: HDMI (only with hardware HDMI inputs), Wi-Fi, Settings. -->
+        <ImageButton
+            android:id="@+id/hdmi_button"
+            style="@style/HeaderButton"
+            android:layout_marginEnd="@dimen/header_button_spacing"
+            android:contentDescription="@string/hdmi_button"
+            android:src="@drawable/ic_input_hdmi"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/wifi_button"
+            style="@style/HeaderButton"
+            android:layout_marginEnd="@dimen/header_button_spacing"
+            android:contentDescription="@string/wifi_button"
+            android:src="@drawable/ic_wifi_off" />
+
+        <ImageButton
+            android:id="@+id/settings_button"
+            style="@style/HeaderButton"
+            android:layout_marginEnd="@dimen/header_button_gap"
+            android:contentDescription="@string/settings_button"
+            android:src="@drawable/ic_settings" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/clock_time"
+                style="@style/HomeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:includeFontPadding="false"
+                android:textSize="@dimen/clock_time_size" />
+
+            <TextView
+                android:id="@+id/clock_date"
+                style="@style/HomeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/clock_date_size" />
+
+            <!-- Shown only when a weather location is set and a recent reading exists. -->
+            <LinearLayout
+                android:id="@+id/weather_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/weather_icon"
+                    android:layout_width="@dimen/weather_icon_size"
+                    android:layout_height="@dimen/weather_icon_size"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitCenter" />
+
+                <TextView
+                    android:id="@+id/weather_temperature"
+                    style="@style/HomeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:importantForAccessibility="no"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/weather_text_size" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
