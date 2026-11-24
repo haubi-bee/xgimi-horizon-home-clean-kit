@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-latest, python: '3.8'}
+          - {os: ubuntu-22.04, python: '3.8'}   # 3.8 is not built for newer Ubuntu runners
           - {os: ubuntu-latest, python: '3.13'}
           - {os: macos-latest, python: '3.9'}
           - {os: macos-latest, python: '3.13'}
