@@ -15,7 +15,9 @@ or Linux**.
     backdrop instead of being cropped);
   - a row of the installed apps, ordered by how often you use them;
   - a recommendations row with the "continue watching" and preview content of your installed apps,
-    dimmed until you move into it;
+    hidden until you move UP into it, so the photo stays free;
+  - after a minute without a key press the menu fades out and only the photo, the clock and the
+    weather remain; any key brings it back;
   - one tile per HDMI input, which you can rename (e.g. "HDMI 2" to "PlayStation");
   - header shortcuts for HDMI, Wi-Fi settings and system settings, next to the clock;
   - optional current weather next to the clock (Open-Meteo, no account or API key);
@@ -26,15 +28,15 @@ or Linux**.
 
 ## Status
 
-Early pre-release. The launcher's core (photo wallpaper and screensaver, usage-ordered app row,
-dimmed recommendations row, settings shortcut) and every individual adb step the scripts perform
-were verified on the device below. The code in this repository was then reorganised for
-publication, and the following parts have **not yet been run on a real device**: the HDMI input
-tiles and renaming, the HDMI and Wi-Fi header shortcuts, the weather display, and the `setup` /
-`restore` commands as a whole. `scripts/cleanhome.py` has automated tests against a simulated
-projector, but has not been run against a real device yet, on any operating system. Read
-`docs/what-gets-changed.md` before running the setup, and expect rough edges. There is no prebuilt
-APK yet; build it from source.
+Early pre-release, tested on a single device (see below). On that device, from Windows, all of this
+was run with the published APK: `find`, `setup`, `sync-photos` and `restore`, the photo wallpaper
+and screensaver, the app and recommendations rows, the HDMI tiles and renaming, the header
+shortcuts, the weather display and the idle fade-out.
+
+Not yet tried on a real device: running the script from macOS or Linux (there it is covered by
+automated tests against a simulated projector only), and `setup` on a projector in factory state
+as one run (the test device already had the packages disabled by hand, step by step). Read
+`docs/what-gets-changed.md` before running the setup, and expect rough edges.
 
 ## Tested on
 
@@ -67,8 +69,8 @@ but nobody has checked.
   seven times, then *Settings > Device Preferences > Developer options* and enable *Network
   debugging* (on some firmware: *USB debugging*). Confirm the "Allow debugging?" prompt on the
   projector screen the first time the script connects.
-- To build from source: JDK 17 and the Android SDK (platform 34). A prebuilt APK is not part of
-  this repository.
+- Only to build the launcher yourself: JDK 17 and the Android SDK (platform 34). Not needed
+  otherwise; the setup downloads the published APK.
 
 The examples below use `python3`; on Windows type `py` instead.
 
@@ -87,8 +89,11 @@ python3 cleanhome.py setup --ip 192.168.1.50
 python3 cleanhome.py sync-photos --folder ~/Pictures/Wallpaper
 ```
 
-`setup` looks for the APK as `scripts/CleanHome.apk`, then for a release build, then for the debug
-build in `launcher/app/build/outputs/apk/`; or pass `--apk <path>`. Every command explains its
+`setup` downloads the published launcher APK from this repository's
+[releases](https://github.com/haubi-bee/xgimi-horizon-home-clean-kit/releases) and checks it against
+the checksum stored in the script, so you do not need to build anything. An APK you built yourself
+wins: `scripts/CleanHome.apk`, then a release build, then the debug build in
+`launcher/app/build/outputs/apk/`; or pass `--apk <path>`. Every command explains its
 options with `--help`.
 
 Options:
@@ -124,7 +129,8 @@ files are skipped; export them as JPEG first.
     *Weather location…*.
 - **Weather location…**: type a city name; the launcher looks it up with Open-Meteo and shows the
   temperature (°F in the US, °C elsewhere) under the date. An empty name turns the weather off.
-- The recommendations row stays dimmed until you move into it.
+- The recommendations row is invisible until you press UP from the app row.
+- After a minute without a key press the menu fades out; the first key press only brings it back.
 - The photo screensaver starts after the idle time set in the system settings
   (*Device Preferences > Screen saver*).
 

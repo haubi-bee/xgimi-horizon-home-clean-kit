@@ -26,6 +26,8 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -39,6 +41,13 @@ DEFAULT_SCREENSAVER = 'com.google.android.backdrop/.Backdrop'
 PHOTO_DIR = '/sdcard/Pictures/CleanHome'
 SUPPORTED_MODEL = 'XK03H'
 ADB_PORT = 5555
+
+# The published launcher build that "setup" downloads when no APK is given or built locally.
+# The checksum pins exactly this file, so a changed download is refused.
+APK_VERSION = '0.1.0'
+APK_SHA256 = '5df1584ff275ec60a021f09e39dc3d777300f5aecaa82689bcc188c2eb21ead8'
+APK_URL = ('https://github.com/haubi-bee/xgimi-horizon-home-clean-kit/releases/download/'
+           f'v{APK_VERSION}/CleanHome.apk')
 CAST_PORT = 8008
 
 # Disabled with "pm disable-user --user 0" (reversible with "pm enable"), only if installed.
@@ -112,6 +121,12 @@ def kit_dirs() -> tuple[Path, Path]:
 
 
 KIT_DIR, CACHE_DIR = kit_dirs()
+
+
+def real_path(path: Path) -> Path:
+    """The path as other programs (adb) see it. Python from the Microsoft Store redirects writes below
+    AppData into a private folder; only Python itself finds such files under the path it was given."""
+    return Path(os.path.realpath(path))
 
 
 def read_json(path: Path):
@@ -277,6 +292,17 @@ class Adb:
                 names.add(name)
         return names
 
+    def home_packages(self) -> set[str]:
+        """Packages of the installed, enabled home screen apps (without the system's placeholder)."""
+        lines = self.shell('cmd package query-activities --brief -a android.intent.action.MAIN '
+                           '-c android.intent.category.HOME', allow_failure=True)
+        names = set()
+        for line in lines:
+            match = re.match(r'^\s+([\w.]+)/[\w.$]+$', line)
+            if match and 'FallbackHome' not in line:
+                names.add(match.group(1))
+        return names
+
     def get_setting(self, namespace: str, key: str) -> str | None:
         value = self.shell_text(f'settings get {namespace} {key}')
         return None if value in ('', 'null') else value
@@ -341,8 +367,42 @@ def resolve_apk(path: str | None) -> Path:
     for candidate in candidates:
         if candidate.is_file():
             return candidate
-    raise KitError('No launcher APK found. Build it (see README) or pass --apk <path>. Looked for: '
-                   + ', '.join(str(candidate) for candidate in candidates))
+    return download_apk()
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(1 << 20), b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def download_apk() -> Path:
+    """The published launcher APK, downloaded once into the settings folder and checked."""
+    target = KIT_DIR / f'CleanHome-{APK_VERSION}.apk'
+    if target.is_file() and file_sha256(target) == APK_SHA256:
+        return real_path(target)
+    step(f'Downloading Clean Home {APK_VERSION}')
+    print(f'  {APK_URL}')
+    KIT_DIR.mkdir(parents=True, exist_ok=True)
+    partial = target.with_suffix('.part')
+    try:
+        with urllib.request.urlopen(APK_URL, timeout=30) as response, partial.open('wb') as stream:
+            shutil.copyfileobj(response, stream)
+    except (OSError, urllib.error.URLError) as error:
+        partial.unlink(missing_ok=True)
+        raise KitError(f'Could not download the launcher ({error}). Download {APK_URL} yourself and pass it '
+                       'with --apk <path>.') from None
+    found = file_sha256(partial)
+    if found != APK_SHA256:
+        partial.unlink()
+        raise KitError(f'The downloaded launcher does not match the expected checksum (got {found}). '
+                       'Nothing was installed. Update this repository and try again.')
+    os.replace(partial, target)
+    target = real_path(target)
+    print(f'  Saved and verified: {target}')
+    return target
 
 
 def run_setup(adb: Adb, options, backup_root: Path) -> Path:
@@ -582,10 +642,20 @@ def run_restore(adb: Adb, options, backup_root: Path) -> None:
             adb.shell(f'appops set {package} {op} {mode}', allow_failure=True)
             print(f'  {package} {op} -> {mode}')
 
-    step('Re-enabling the Google launcher first')
-    enable_package(GOOGLE_LAUNCHER)
-
     state_files = find_state_files(backup_root, options.backup_dir, device_serial)
+    states = [read_json(path) for path in state_files]
+
+    # HOME must have a target once Clean Home is gone. The Google launcher stays as it was only if
+    # setup did not disable it (it was already off) and another home screen app is installed.
+    other_homes = adb.home_packages() - {LAUNCHER_PACKAGE, GOOGLE_LAUNCHER}
+    if states and other_homes and not any(state.get('googleLauncherDisabled') for state in states):
+        step('Home screen')
+        print(f"  The Google launcher was already disabled before the setup and stays that way; "
+              f"HOME goes to: {', '.join(sorted(other_homes))}")
+    else:
+        step('Re-enabling the Google launcher first')
+        enable_package(GOOGLE_LAUNCHER)
+
     if not state_files:
         step('No recorded setup found: restoring factory defaults')
         for package in BLOAT_PACKAGES + [ASSISTANT_PACKAGE]:
@@ -599,9 +669,8 @@ def run_restore(adb: Adb, options, backup_root: Path) -> None:
         put_setting('system', 'power_key_definition', None)
         put_setting('secure', 'screensaver_components', DEFAULT_SCREENSAVER)
         set_appop(FILE_MANAGER, 'REQUEST_INSTALL_PACKAGES', 'allow')
-    for path in state_files:
+    for path, state in zip(state_files, states):
         step(f'Undoing {path}')
-        state = read_json(path)
         if state.get('googleLauncherDisabled'):
             enable_package(GOOGLE_LAUNCHER)
         for package in state.get('disabledPackages') or []:
@@ -732,7 +801,7 @@ def run_sync(options, make_adb) -> None:
     pushed = removed = 0
     for name in sorted(wanted):
         if name not in remote:
-            adb.device('push', str(CACHE_DIR / name), f'{PHOTO_DIR}/{name}')
+            adb.device('push', str(real_path(CACHE_DIR / name)), f'{PHOTO_DIR}/{name}')
             pushed += 1
     for name in remote:
         if name not in wanted:
@@ -828,6 +897,7 @@ def cmd_find(options) -> None:
 
     if not found:
         print('No Cast devices found. Is the projector on and in the same network as this computer?')
+        print('After switching it on, it can take about two minutes until it answers.')
         return
     found.sort(key=lambda item: ipaddress.IPv4Address(item[0]))
     rows = [('IP', 'Name', 'Network debugging')] + found
@@ -873,8 +943,8 @@ def build_parser() -> argparse.ArgumentParser:
                     'uninstalled), and every changed value is written, together with its previous value, to '
                     'backup-<timestamp>/state.json next to this script. Do not run this while someone is watching.')
     add_device_options(setup)
-    setup.add_argument('--apk', help='launcher APK to install (default: CleanHome.apk next to this script, else the '
-                                     'release build, else the debug build of ../launcher)')
+    setup.add_argument('--apk', help='launcher APK to install (default: CleanHome.apk next to this script, else a '
+                                     'build of ../launcher, else the published release is downloaded and verified)')
     setup.add_argument('--skip-debloat', action='store_true', help='do not disable any packages')
     setup.add_argument('--keep-assistant', action='store_true', help='keep the Google Assistant / voice search enabled')
     setup.add_argument('--full-power-off', action='store_true',

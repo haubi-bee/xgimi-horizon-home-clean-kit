@@ -38,6 +38,7 @@ class FakeProjector(cleanhome.Adb):
         self.dns_works = True
         self.home_opens_launcher = True
         self.started = []
+        self.home_apps = {cleanhome.GOOGLE_LAUNCHER, cleanhome.LAUNCHER_PACKAGE}
 
     def snapshot(self):
         return (set(self.installed), set(self.disabled), dict(self.settings), dict(self.appops))
@@ -107,6 +108,12 @@ class FakeProjector(cleanhome.Adb):
         if words[0] == 'am':
             self.started.append(words)
             return []
+        if words[:3] == ['cmd', 'package', 'query-activities']:
+            homes = sorted(name for name in self.home_apps if name in self.installed and name not in self.disabled)
+            lines = [f'{len(homes) + 1} activities found:']
+            for index, name in enumerate(homes):
+                lines += [f'  Activity #{index}:', '    priority=0 preferredOrder=0 isDefault=true', f'    {name}/.Home']
+            return lines + ['  Activity #9:', '    priority=-1000', '    com.android.tv.settings/.system.FallbackHome']
         if words[0] in ('mkdir', 'input', 'cmd') or words[:2] == ['pm', 'grant']:
             return []
         raise AssertionError(f'unexpected shell command: {text}')
@@ -173,6 +180,24 @@ class SetupAndRestoreTest(KitTestCase):
         self.assertEqual((installed, disabled, settings), before[:3])
         self.assertEqual(appops, {(cleanhome.FILE_MANAGER, 'REQUEST_INSTALL_PACKAGES'): 'default'})
 
+    def test_restore_keeps_a_previously_disabled_google_launcher_when_another_home_app_exists(self):
+        device = FakeProjector()
+        device.installed.add('org.example.home')
+        device.home_apps.add('org.example.home')
+        device.disabled.add(cleanhome.GOOGLE_LAUNCHER)
+        before = device.snapshot()
+        cleanhome.run_setup(device, setup_options(self.apk), self.backups)
+        self.restore(device)
+        self.assertEqual(device.snapshot()[:3], before[:3])
+
+    def test_restore_enables_the_google_launcher_when_no_other_home_app_exists(self):
+        device = FakeProjector()
+        device.disabled.add(cleanhome.GOOGLE_LAUNCHER)
+        device.home_opens_launcher = True
+        cleanhome.run_setup(device, setup_options(self.apk), self.backups)
+        self.restore(device)
+        self.assertNotIn(cleanhome.GOOGLE_LAUNCHER, device.disabled)
+
     def test_restore_ignores_runs_of_another_device(self):
         device = FakeProjector()
         cleanhome.run_setup(device, setup_options(self.apk), self.backups)
@@ -230,6 +255,32 @@ class SetupAndRestoreTest(KitTestCase):
 
         self.assertEqual(device.disabled, {'com.android.printspooler'})
         self.assertNotIn(('global', 'send_action_app_error'), device.settings)
+
+
+class DownloadTest(KitTestCase):
+    def setUp(self):
+        super().setUp()
+        self.enter(mock.patch.object(cleanhome, 'SCRIPT_DIR', self.temp / 'empty' / 'scripts'))
+        self.release = self.temp / 'release.apk'
+        self.release.write_bytes(b'published apk')
+        self.enter(mock.patch.object(cleanhome, 'APK_URL', self.release.as_uri()))
+
+    def test_published_apk_is_downloaded_once_and_verified(self):
+        with mock.patch.object(cleanhome, 'APK_SHA256', cleanhome.file_sha256(self.release)):
+            apk = cleanhome.resolve_apk(None)
+            self.assertEqual(apk.read_bytes(), b'published apk')
+            self.release.unlink()  # the second call must not need the network
+            self.assertEqual(cleanhome.resolve_apk(None), apk)
+
+    def test_changed_download_is_refused(self):
+        with self.assertRaisesRegex(cleanhome.KitError, 'checksum'):
+            cleanhome.resolve_apk(None)
+        self.assertEqual([path.name for path in cleanhome.KIT_DIR.iterdir()], [])
+
+    def test_failed_download_names_the_manual_way(self):
+        self.release.unlink()
+        with self.assertRaisesRegex(cleanhome.KitError, '--apk'):
+            cleanhome.resolve_apk(None)
 
 
 class AddressTest(KitTestCase):
