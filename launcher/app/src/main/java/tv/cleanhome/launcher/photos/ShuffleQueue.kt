@@ -25,4 +25,7 @@ class ShuffleQueue<T : Any>(private val random: Random = Random.Default) {
         }
         return pending.removeFirst().also { last = it }
     }
+
+    /** Forgets the rest of the current cycle, so the next call reloads the list. */
+    fun startNewCycle() = pending.clear()
 }

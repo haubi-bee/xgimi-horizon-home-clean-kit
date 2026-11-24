@@ -7,13 +7,21 @@ import java.io.File
 
 /**
  * Photos from /sdcard/Pictures/CleanHome (recursive). Random order without direct repeats; the
- * folder is re-read on every cycle. Blocking; call on an IO thread.
+ * folder is re-read on every cycle and as soon as a photo of the current cycle is gone. Blocking;
+ * call on an IO thread.
  */
 class PhotoRepository(private val root: File = defaultRoot()) {
     private val queue = ShuffleQueue<File>()
     private var lastDiagnosis: String? = null
 
-    fun next(): File? = queue.next(::scan)
+    fun next(): File? {
+        val file = queue.next(::scan) ?: return null
+        if (file.isFile) return file
+        // The folder changed since it was read (for example a photo sync replaced the files):
+        // drop the outdated order and read the folder again right away.
+        queue.startNewCycle()
+        return queue.next(::scan)
+    }
 
     private fun scan(): List<File> {
         val files = try {

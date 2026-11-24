@@ -21,6 +21,14 @@ class ShuffleQueueTest {
     }
 
     @Test
+    fun startNewCycleReloadsImmediately() {
+        val queue = ShuffleQueue<String>(Random(1))
+        queue.next { listOf("a", "b", "c") }
+        queue.startNewCycle()
+        assertEquals("x", queue.next { listOf("x") })
+    }
+
+    @Test
     fun neverRepeatsDirectlyAcrossCycles() {
         val queue = ShuffleQueue<Int>(Random(42))
         var previous: Int? = null

@@ -31,11 +31,13 @@
     </FrameLayout>
 
     <View
+        android:id="@+id/home_scrim"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/home_scrim" />
 
     <LinearLayout
+        android:id="@+id/home_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipChildren="false"

@@ -97,6 +97,14 @@ class HomeActivity : Activity() {
     /** Adapter position to focus after the next app load. */
     private var pendingAppFocus: Int? = 0
     private var recommendationsExpanded = false
+
+    // After a minute without a key press only the photo, the clock and the weather stay visible.
+    private val idleHandler = Handler(Looper.getMainLooper())
+    private val enterIdle = Runnable { if (hasWindowFocus()) setIdle(true, animate = true) else restartIdleTimer() }
+    private var idle = false
+    private var swallowedKey = KeyEvent.KEYCODE_UNKNOWN
+    private lateinit var scrim: View
+    private lateinit var idleHiddenViews: List<View>
     private var currentRecKey: String? = null
     private var packageReceiverRegistered = false
     private var tvObserverRegistered = false
@@ -127,6 +135,13 @@ class HomeActivity : Activity() {
         recSource = findViewById(R.id.recommendation_source)
         recList = findViewById(R.id.recommendation_list)
         appList = findViewById(R.id.app_list)
+        scrim = findViewById(R.id.home_scrim)
+        idleHiddenViews = listOf(
+            findViewById(R.id.home_content),
+            findViewById(R.id.hdmi_button),
+            findViewById(R.id.wifi_button),
+            findViewById(R.id.settings_button),
+        )
 
         // Only hint at the recommendations row while the user is not navigating inside it.
         applyRecommendationsExpanded(expanded = false, animate = false)
@@ -188,8 +203,8 @@ class HomeActivity : Activity() {
     }
 
     /**
-     * Collapsed, the row stays as a faint hint (still reachable with UP) and its texts disappear.
-     * Positions in the layout never change, so nothing jumps.
+     * Collapsed, the row and its texts are invisible, so the photo stays free; UP from the apps still
+     * moves into it. Positions in the layout never change, so nothing jumps.
      */
     private fun applyRecommendationsExpanded(expanded: Boolean, animate: Boolean) {
         if (recommendationsExpanded == expanded && animate) return
@@ -228,9 +243,12 @@ class HomeActivity : Activity() {
         reloadApps()
         reloadRecommendations()
         registerTvObserver()
+        setIdle(false, animate = false)
+        restartIdleTimer()
     }
 
     override fun onPause() {
+        idleHandler.removeCallbacks(enterIdle)
         unregisterTvObserver()
         recsRefreshJob?.cancel()
         super.onPause()
@@ -264,7 +282,39 @@ class HomeActivity : Activity() {
         super.onNewIntent(intent)
         if (handleWeatherExtra(intent)) return
         // HOME pressed while on the home screen: back to the start.
+        setIdle(false, animate = true)
+        restartIdleTimer()
         if (hasWindowFocus()) focusFirstApp()
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        restartIdleTimer()
+        if (idle) {
+            // The key press that brings the menu back does nothing else.
+            setIdle(false, animate = true)
+            if (event.action == KeyEvent.ACTION_DOWN) swallowedKey = event.keyCode
+            return true
+        }
+        if (event.keyCode == swallowedKey) {
+            if (event.action == KeyEvent.ACTION_UP) swallowedKey = KeyEvent.KEYCODE_UNKNOWN
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    private fun restartIdleTimer() {
+        idleHandler.removeCallbacks(enterIdle)
+        idleHandler.postDelayed(enterIdle, IDLE_AFTER_MS)
+    }
+
+    private fun setIdle(value: Boolean, animate: Boolean) {
+        if (idle == value && animate) return
+        idle = value
+        val targets = idleHiddenViews.map { it to if (value) 0f else 1f } + (scrim to if (value) IDLE_SCRIM_ALPHA else 1f)
+        for ((view, alpha) in targets) {
+            view.animate().cancel()
+            if (animate) view.animate().alpha(alpha).setDuration(IDLE_FADE_MS).start() else view.alpha = alpha
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -583,7 +633,10 @@ class HomeActivity : Activity() {
         private const val BACKGROUND_INTERVAL_MS = 30_000L
         private const val BACKGROUND_FADE_MS = 1_500L
         private const val RECOMMENDATIONS_DEBOUNCE_MS = 2_000L
-        private const val COLLAPSED_ROW_ALPHA = 0.12f
+        private const val COLLAPSED_ROW_ALPHA = 0f
+        private const val IDLE_AFTER_MS = 60_000L
+        private const val IDLE_FADE_MS = 600L
+        private const val IDLE_SCRIM_ALPHA = 0.45f
         private const val EXPAND_DURATION_MS = 180L
     }
 }
