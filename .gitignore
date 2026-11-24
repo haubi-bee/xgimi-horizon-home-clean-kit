@@ -11,10 +11,13 @@ keystore.properties
 *.jks
 *.keystore
 
-# Device backups written by scripts/setup.ps1 (contain device details)
+# Device backups written by scripts/cleanhome.py setup (contain device details)
 backup-*/
 
 # IDE
 .idea/
 *.iml
 .vscode/
+
+# Python
+__pycache__/

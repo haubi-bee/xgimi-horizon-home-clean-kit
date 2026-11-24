@@ -5,7 +5,8 @@ An ad-free home screen with your own photos as wallpaper, plus a reversible debl
 
 No custom ROM, no root, no bootloader unlocking. The launcher is a normal app; the setup only
 disables packages (it never uninstalls system apps) and records every change, so
-`scripts/restore.ps1` puts the projector back the way it was.
+the `restore` command puts the projector back the way it was. The setup runs from **Windows, macOS
+or Linux**.
 
 ## Features
 
@@ -20,8 +21,8 @@ disables packages (it never uninstalls system apps) and records every change, so
   - optional current weather next to the clock (Open-Meteo, no account or API key);
   - English and German user interface; clock and date follow the device language.
 - **Photo screensaver** "Clean Home Photos" with the same photos, a slow zoom and a small clock.
-- **PC scripts** (Windows PowerShell 5.1) to find the projector, set it up, sync a photo folder and
-  undo everything.
+- **One script for Windows, macOS and Linux** (`scripts/cleanhome.py`, Python) to find the
+  projector, set it up, sync a photo folder and undo everything.
 
 ## Status
 
@@ -29,69 +30,85 @@ Early pre-release. The launcher's core (photo wallpaper and screensaver, usage-o
 dimmed recommendations row, settings shortcut) and every individual adb step the scripts perform
 were verified on the device below. The code in this repository was then reorganised for
 publication, and the following parts have **not yet been run on a real device**: the HDMI input
-tiles and renaming, the HDMI and Wi-Fi header shortcuts, the weather display, and `setup.ps1` /
-`restore.ps1` as complete scripts. Read `docs/what-gets-changed.md` before running the setup, and
-expect rough edges. There is no prebuilt APK yet; build it from source.
+tiles and renaming, the HDMI and Wi-Fi header shortcuts, the weather display, and the `setup` /
+`restore` commands as a whole. `scripts/cleanhome.py` has automated tests against a simulated
+projector, but has not been run against a real device yet, on any operating system. Read
+`docs/what-gets-changed.md` before running the setup, and expect rough edges. There is no prebuilt
+APK yet; build it from source.
 
 ## Tested on
 
 One XGIMI Horizon Pro (model XK03H), Android TV 11, firmware RT.3.24.327.
 
 Other XGIMI models, other firmware versions and other Android TV devices are **untested**.
-`setup.ps1` refuses to run on other models unless you pass `-Force`. The launcher itself uses only
+The `setup` command refuses to run on other models unless you pass `--force`. The launcher itself uses only
 standard Android TV APIs (plus XGIMI's own input switcher when it exists), so it may work elsewhere,
 but nobody has checked.
 
 ## Requirements
 
-- A Windows PC in the same network as the projector.
-- adb: `winget install Google.PlatformTools` (open a new PowerShell window afterwards).
+- A computer with Windows, macOS or Linux in the same network as the projector.
+- Python 3.8 or newer and adb:
+
+  | | Python | adb |
+  |---|---|---|
+  | Windows | `winget install Python.Python.3.13` | `winget install Google.PlatformTools` |
+  | macOS | `brew install python` | `brew install android-platform-tools` |
+  | Debian/Ubuntu | preinstalled | `sudo apt install adb` |
+  | Fedora | preinstalled | `sudo dnf install android-tools` |
+  | Arch | `sudo pacman -S python` | `sudo pacman -S android-tools` |
+
+  Open a new terminal window afterwards. adb is also found in an Android SDK (`ANDROID_HOME`), or
+  pass `--adb <path>`.
+- Only for copying photos: the Python package Pillow. Windows: `py -m pip install pillow`, macOS:
+  `python3 -m pip install --user pillow`, Debian/Ubuntu: `sudo apt install python3-pil`, Fedora:
+  `sudo dnf install python3-pillow`, Arch: `sudo pacman -S python-pillow`.
 - Network debugging on the projector: *Settings > Device Preferences > About*, press OK on *Build*
   seven times, then *Settings > Device Preferences > Developer options* and enable *Network
   debugging* (on some firmware: *USB debugging*). Confirm the "Allow debugging?" prompt on the
-  projector screen the first time a script connects.
+  projector screen the first time the script connects.
 - To build from source: JDK 17 and the Android SDK (platform 34). A prebuilt APK is not part of
   this repository.
 
-If PowerShell refuses to run the scripts, allow local scripts for this window only:
-`Set-ExecutionPolicy -Scope Process Bypass`.
+The examples below use `python3`; on Windows type `py` instead.
 
 ## Quick start
 
-```powershell
+```sh
 cd scripts
 
 # 1. Find the projector's IP address
-.\find-projector.ps1
+python3 cleanhome.py find
 
-# 2. Set it up (remembers the address for the other scripts)
-.\setup.ps1 -Ip 192.168.1.50
+# 2. Set it up (remembers the address for the other commands)
+python3 cleanhome.py setup --ip 192.168.1.50
 
 # 3. Copy your photos (remembers the folder)
-.\sync-photos.ps1 -Folder "D:\Photos\Wallpaper"
+python3 cleanhome.py sync-photos --folder ~/Pictures/Wallpaper
 ```
 
-`setup.ps1` looks for the APK as `scripts\CleanHome.apk`, then for a release build, then for the
-debug build in `launcher\app\build\outputs\apk\`; or pass `-Apk <path>`.
+`setup` looks for the APK as `scripts/CleanHome.apk`, then for a release build, then for the debug
+build in `launcher/app/build/outputs/apk/`; or pass `--apk <path>`. Every command explains its
+options with `--help`.
 
 Options:
 
 | Option | Effect |
 |---|---|
-| `-SkipDebloat` | Do not disable any packages. |
-| `-KeepAssistant` | Keep the Google Assistant / voice search enabled. |
-| `-FullPowerOff` | Power key shuts the projector down instead of standby. |
-| `-SecureDns quad9` | Encrypted DNS via `dns.quad9.net`; rolled back automatically if name resolution fails. Default: `off`. |
-| `-WeatherCity "Hamburg"` | Preset the weather location. |
-| `-Force` | Run on a model other than the XK03H (untested). |
+| `--skip-debloat` | Do not disable any packages. |
+| `--keep-assistant` | Keep the Google Assistant / voice search enabled. |
+| `--full-power-off` | Power key shuts the projector down instead of standby. |
+| `--secure-dns quad9` | Encrypted DNS via `dns.quad9.net`; rolled back automatically if name resolution fails. Default: `off`. |
+| `--weather-city "Hamburg"` | Preset the weather location. |
+| `--force` | Run on a model other than the XK03H (untested). |
 
-Do not run `setup.ps1` while someone is watching: installing can show a Play Protect dialog, and the
+Do not run `setup` while someone is watching: installing can show a Play Protect dialog, and the
 script presses HOME. **Turn network debugging off again afterwards** (see
 [docs/security.md](docs/security.md)).
 
-Run `sync-photos.ps1` again whenever the folder changes. It resizes photos to at most 2560 px
-(JPEG), applies the EXIF orientation and mirrors the folder to `/sdcard/Pictures/CleanHome`.
-HEIC/WebP/RAW files are skipped; export them as JPEG first.
+Run `sync-photos` again whenever the folder changes. It resizes photos to at most 2560 px (JPEG),
+applies the EXIF orientation and mirrors the folder to `/sdcard/Pictures/CleanHome`. HEIC/AVIF/RAW
+files are skipped; export them as JPEG first.
 
 ## Using it on the TV
 
@@ -113,27 +130,30 @@ HEIC/WebP/RAW files are skipped; export them as JPEG first.
 
 ## Build from source
 
-```powershell
+```sh
 cd launcher
-.\gradlew.bat testDebugUnitTest
-.\gradlew.bat assembleDebug
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
 ```
 
-The APK is `launcher\app\build\outputs\apk\debug\app-debug.apk`. Gradle needs the SDK location,
-either via the `ANDROID_HOME` environment variable or a `launcher\local.properties` file with
-`sdk.dir=...` (gitignored).
+On Windows use `.\gradlew.bat` instead of `./gradlew`. The APK is
+`launcher/app/build/outputs/apk/debug/app-debug.apk`. Gradle needs the SDK location, either via the
+`ANDROID_HOME` environment variable or a `launcher/local.properties` file with `sdk.dir=...`
+(gitignored).
 
-Release builds: create `launcher\keystore.properties` (gitignored) with `storeFile`, `storePassword`,
-`keyAlias` and `keyPassword`, then run `.\gradlew.bat assembleRelease`. Without that file the release
+Release builds: create `launcher/keystore.properties` (gitignored) with `storeFile`, `storePassword`,
+`keyAlias` and `keyPassword`, then run `./gradlew assembleRelease`. Without that file the release
 APK is built unsigned.
+
+Tests of the setup script: `python3 -m unittest discover -s scripts`.
 
 Logs: `adb logcat -s CleanHome`.
 
 ## Undo
 
-```powershell
+```sh
 cd scripts
-.\restore.ps1
+python3 cleanhome.py restore
 ```
 
 It re-enables the Google home screen first, then restores every package, setting and app operation
